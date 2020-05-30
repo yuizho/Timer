@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Button, Card, Icon, Statistic } from "semantic-ui-react";
 import "./App.css";
 
@@ -9,84 +9,81 @@ interface AppState {
   timerState: "ticking" | "paused";
 }
 
-class App extends Component<{}, AppState> {
-  timerId?: NodeJS.Timer;
+const App: FC = () => {
+  const [timeLeft, setTimeLeft] = useState(LIMIT);
+  const [timerState, setTimerState] = useState("ticking");
+  // https://www.carlrippon.com/typed-usestate-with-typescript/
+  const [timerId, setTimerId] = useState<NodeJS.Timer | null>(null);
 
-  constructor(props: {}) {
-    super(props);
-    this.state = { timeLeft: LIMIT, timerState: "ticking" };
-  }
+  //const timerId?: NodeJS.Timer = nu;
 
-  reset = () => {
-    this.setState({ timeLeft: LIMIT });
+  const reset = () => {
+    setTimeLeft(LIMIT);
+    pause();
   };
 
-  pause = () => {
-    clearInterval(this.timerId as NodeJS.Timer);
-    this.setState({ timerState: "paused" });
+  const pause = () => {
+    clearInterval(timerId as NodeJS.Timer);
+    setTimerState("paused");
   };
 
-  resume = () => {
-    this.timerId = setInterval(this.tick, 1000);
-    this.setState({ timerState: "ticking" });
+  const resume = () => {
+    setTimerId(setInterval(tick, 1000));
+    setTimerState("ticking");
   };
 
-  toggleTimerState = () => {
-    if (this.state.timerState === "ticking") {
-      this.pause();
+  const toggleTimerState = () => {
+    if (timerState === "ticking") {
+      pause();
     } else {
-      this.resume();
+      resume();
     }
   };
 
-  tick = () => {
-    const { timeLeft } = this.state;
-    if (timeLeft === 0) {
-      this.pause();
-      return;
-    }
-    this.setState((prevState) => ({
-      timeLeft: prevState.timeLeft - 1,
-    }));
+  const tick = () => {
+    console.log("tick is called");
+    setTimeLeft((prevTime) => {
+      if (prevTime === 0) {
+        pause();
+        return 0;
+      } else {
+        return prevTime - 1;
+      }
+    });
   };
 
-  componentDidMount = () => {
-    this.timerId = setInterval(this.tick, 1000);
-  };
+  useEffect(() => {
+    setTimerId(setInterval(tick, 1000));
 
-  componentWillUnmount = () => {
-    clearInterval(this.timerId as NodeJS.Timer);
-  };
+    return clearInterval(timerId as NodeJS.Timer);
+  }, []);
 
-  render() {
-    const { timeLeft, timerState } = this.state;
-    return (
-      <div className="number-board">
-        <header>
-          <h1>Timer</h1>
-        </header>
-        <Card>
-          <Statistic className="number-board">
-            <Statistic.Label>timer</Statistic.Label>
-            <Statistic.Value>{timeLeft}</Statistic.Value>
-          </Statistic>
-          <Card.Content>
-            <Button color="blue" fluid onClick={this.toggleTimerState}>
-              {timerState === "ticking" ? (
-                <Icon name="pause" />
-              ) : (
-                <Icon name="play" />
-              )}
-            </Button>
-            <br />
-            <Button color="red" fluid onClick={this.reset}>
-              <Icon name="redo" />
-            </Button>
-          </Card.Content>
-        </Card>
-      </div>
-    );
-  }
-}
+  return (
+    <div className="number-board">
+      <header>
+        <h1>Timer</h1>
+      </header>
+      <Card>
+        <Statistic className="number-board">
+          <Statistic.Label>timer</Statistic.Label>
+          <Statistic.Value>{timeLeft}</Statistic.Value>
+        </Statistic>
+        <Card.Content>
+          <Button color="blue" fluid onClick={toggleTimerState}>
+            {timerState === "ticking" ? (
+              <Icon name="pause" />
+            ) : (
+              <Icon name="play" />
+            )}
+          </Button>
+          <br />
+          <Button color="red" fluid onClick={reset}>
+            <Icon name="redo" />
+          </Button>
+        </Card.Content>
+      </Card>
+    </div>
+  );
+};
 
 export default App;
